@@ -1,0 +1,79 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+/*
+ * Copyright 2020-2022 Toradex
+ */
+
+// Verdin DSI to LVDS Adapter with plugged in
+// Capacitive Touch Display 10.1" LVDS orderable at Toradex.
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "toradex,verdin-imx8mm";
+};
+
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/gpio/gpio.h>
+#include "verdin-imx8_mipi-dsi-to-sn65dsi84.dtsi"
+//#include "display-lt170410_sn65dsi84_overlay.dtsi"
+#include "display-KD101WXDSI01_SV1_overlay.dtsi"
+
+&atmel_mxt_ts {
+	vdd-supply = <&reg_dsi_lvds>;
+	status = "disabled";
+};
+
+&backlight {
+	status = "okay";
+};
+
+&gpu {
+	status = "okay";
+};
+
+/* Verdin I2C_2_DSI */
+&i2c2 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+
+
+	touch@41 {
+		compatible = "ilitek,ili251x";
+		//compatible = "ilitek,ili210x";
+		reg = <0x41>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_gpio_9_dsi>, <&pinctrl_i2s_2_bclk_touch_reset>;
+		/* Verdin DSI_1_INT# (TOUCH_INT#, SODIMM 17) */
+		interrupt-parent = <&gpio3>;
+		interrupts = <15 IRQ_TYPE_EDGE_RISING>;
+		//interrupts = <15 IRQ_TYPE_EDGE_FALLING>; // 修改为下降沿
+		/* Verdin I2S_2_BCLK (TOUCH_RESET#, SODIMM 42) */
+		reset-gpios = <&gpio3 23 GPIO_ACTIVE_LOW>;
+		touchscreen-size-x = <1280>;
+    	touchscreen-size-y = <800>;
+		wakeup-source;
+
+	};
+};
+
+&lcdif {
+	status = "okay";
+};
+
+&panel_lvds {
+	panel-timing {
+		/*
+		 * video_pll1 is at 1039500000, take PLL1/15
+		 * otherwise we don't get a picture on NXP i.MX 8M Mini
+		 */
+		//clock-frequency = <74250000>;
+		//clock-frequency = <69300000>;
+	};
+};
+
+&reg_dsi_lvds {
+	/* Verdin CTRL_SLEEP_MOCI# (SODIMM 256) */
+	gpio = <&gpio5 1 GPIO_ACTIVE_HIGH>;
+};
